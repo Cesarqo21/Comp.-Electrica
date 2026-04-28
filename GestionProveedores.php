@@ -1,9 +1,9 @@
-
 <?php
 session_start();
+include("../controlador/conexion.php");
 
 if(!isset($_SESSION['usuario']) || $_SESSION['rol'] != "administrativo"){
-    header("Location: ../vistas/login.php");
+    header("Location: login.php");
     exit();
 }
 ?>
@@ -74,118 +74,109 @@ padding:10px;
 border-bottom:1px solid #334155;
 }
 </style>
-
-<script>
-
-// 🔥 LOGOUT CORRECTO
-function cerrarSesion(){
-    window.location="../controlador/logout.php";
-}
-
-function agregar(){
-    let tabla=document.getElementById("tabla")
-    let fila=tabla.insertRow()
-
-    fila.innerHTML=`
-    <td>Nuevo</td>
-    <td>${nombre.value}</td>
-    <td>${telefono.value}</td>
-    <td>${correo.value}</td>
-    <td>
-    <button class="editar" onclick="editar(this)">Editar</button>
-    <button class="eliminar" onclick="eliminar(this)">Eliminar</button>
-    </td>`
-}
-
-function eliminar(btn){
-    btn.parentNode.parentNode.remove()
-}
-
-function editar(btn){
-    let fila=btn.parentNode.parentNode
-
-    nombre.value=fila.cells[1].innerText
-    telefono.value=fila.cells[2].innerText
-    correo.value=fila.cells[3].innerText
-}
-
-function buscar(){
-    let filtro=busqueda.value.toLowerCase()
-    let filas=document.querySelectorAll("#tabla tr")
-
-    filas.forEach(f=>{
-        f.style.display=f.innerText.toLowerCase().includes(filtro)?"":"none"
-    })
-}
-</script>
-
 </head>
 
 <body>
 
 <div class="sidebar">
 <h2>Sistema</h2>
-
 <a href="#">Proveedores</a>
-<a onclick="cerrarSesion()">Cerrar sesión</a>
+<a href="../controlador/logout.php">Cerrar sesión</a>
 </div>
 
 <div class="main">
 
 <h1>Gestión de proveedores</h1>
 
+<!-- AGREGAR -->
 <div class="card">
+<form action="../controlador/guardar_proveedor.php" method="POST">
+<input name="nombre" placeholder="Nombre" required>
+<input name="telefono" placeholder="Teléfono" required>
+<input name="direccion" placeholder="Dirección" required>
 
-<input id="nombre" placeholder="Nombre">
-<input id="telefono" placeholder="Teléfono">
-<input id="correo" placeholder="Correo">
-
-<button class="agregar" onclick="agregar()">Agregar</button>
-
+<button class="agregar" type="submit">Agregar</button>
+</form>
 </div>
 
+<!-- TABLA -->
 <div class="card">
 
-<input id="busqueda" placeholder="Buscar..." onkeyup="buscar()">
-
-<table id="tabla">
-
+<table>
 <tr>
 <th>ID</th>
 <th>Nombre</th>
 <th>Teléfono</th>
-<th>Correo</th>
+<th>Dirección</th>
 <th>Acciones</th>
 </tr>
 
-<tr>
-<td>1</td>
-<td>ElectroMax</td>
-<td>7771234567</td>
-<td>contacto@electromax.com</td>
-<td>
-<button class="editar" onclick="editar(this)">Editar</button>
-<button class="eliminar" onclick="eliminar(this)">Eliminar</button>
-</td>
-</tr>
+<?php
+$sql = "SELECT * FROM proveedor";
+$res = $conexion->query($sql);
 
+while($f = $res->fetch_assoc()){
+?>
 <tr>
-<td>2</td>
-<td>Distribuidora Luz</td>
-<td>7779876543</td>
-<td>ventas@luz.com</td>
+<td><?= $f['id_proveedor'] ?></td>
+<td><?= $f['nombre'] ?></td>
+<td><?= $f['telefono'] ?></td>
+<td><?= $f['direccion'] ?></td>
 <td>
-<button class="editar" onclick="editar(this)">Editar</button>
-<button class="eliminar" onclick="eliminar(this)">Eliminar</button>
+
+<button class="editar"
+onclick="editarProveedor(
+<?= $f['id_proveedor'] ?>,
+'<?= $f['nombre'] ?>',
+'<?= $f['telefono'] ?>',
+'<?= $f['direccion'] ?>'
+)">
+Editar</button>
+
+<a href="../controlador/eliminar_proveedor.php?id=<?= $f['id_proveedor'] ?>">
+<button class="eliminar">Eliminar</button>
+</a>
+
 </td>
 </tr>
+<?php } ?>
 
 </table>
+</div>
 
+<!-- FORM EDITAR -->
+<div class="card" id="formEditar" style="display:none;">
+<h3>Editar proveedor</h3>
+
+<form action="../controlador/actualizar_proveedor.php" method="POST">
+<input type="hidden" name="id" id="edit_id">
+
+<input name="nombre" id="edit_nombre" required>
+<input name="telefono" id="edit_telefono" required>
+<input name="direccion" id="edit_direccion" required>
+
+<button class="editar" type="submit">Actualizar</button>
+<button type="button" onclick="cerrar()">Cancelar</button>
+</form>
 </div>
 
 </div>
+
+<script>
+function editarProveedor(id,nombre,telefono,direccion){
+
+document.getElementById("formEditar").style.display="block";
+
+document.getElementById("edit_id").value=id;
+document.getElementById("edit_nombre").value=nombre;
+document.getElementById("edit_telefono").value=telefono;
+document.getElementById("edit_direccion").value=direccion;
+}
+
+function cerrar(){
+document.getElementById("formEditar").style.display="none";
+}
+</script>
 
 </body>
 </html>
-```
